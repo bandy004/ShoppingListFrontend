@@ -117,7 +117,8 @@
 </template>
 
 <script>
-const API ="http://localhost:3000/api/Items"
+//const API ="http://localhost:3000/api/Items"
+const API ="https://shop-back.herokuapp.com/api/Items"
 export default{
   data () {
     return {

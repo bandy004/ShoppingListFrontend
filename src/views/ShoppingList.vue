@@ -31,7 +31,8 @@
 </template>
 
 <script>
-const API ="http://localhost:3000/api/ShoppingLists"
+//const API ="http://localhost:3000/api/ShoppingLists"
+const API = "https://shop-back.herokuapp.com/api/ShoppingLists"
 export default{
   data () {
     return {
