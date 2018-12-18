@@ -1,5 +1,5 @@
 {
-  "name": "taskapp",
+  "name": "shopping_list",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -9,6 +9,7 @@
     "start": "node server.js"
   },
   "dependencies": {
+    "express": "^4.16.4",
     "register-service-worker": "^1.5.2",
     "vue": "^2.5.17",
     "vue-router": "^3.0.1",
@@ -54,5 +55,17 @@
     "> 1%",
     "last 2 versions",
     "not ie <= 8"
-  ]
+  ],
+  "description": "## Project setup ``` npm install ```",
+  "main": "babel.config.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bandy004/ShoppingListFrontend.git"
+  },
+  "author": "Debdeep Banerjee",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/bandy004/ShoppingListFrontend/issues"
+  },
+  "homepage": "https://github.com/bandy004/ShoppingListFrontend#readme"
 }
