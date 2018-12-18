@@ -123,8 +123,8 @@
 
 <script>
 //const API ="http://localhost:3000/api/Items"
-const nAPI = "http://localhost:3000/api/ShoppingLists/";//+{{this.list_id}}+"/items"
-//const API ="https://shop-back.herokuapp.com/api/ShoppingLists/"
+//const nAPI = "http://localhost:3000/api/ShoppingLists/";//+{{this.list_id}}+"/items"
+const nAPI ="https://shop-back.herokuapp.com/api/ShoppingLists/"
 export default{
   data () {
     return {
