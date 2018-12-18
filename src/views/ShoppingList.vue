@@ -1,6 +1,38 @@
 <template>
   <div>
     <v-layout justify-center>
+      <v-dialog v-model="dialog" max-width="30%">
+        <v-btn slot="activator" color="primary" dark class="mb-2"> Add List</v-btn>
+        <v-card>
+          <v-card-title>
+            <span class="headline">{{formTitle}}</span>
+          </v-card-title>
+
+          <v-card-text>
+            <v-container grid-list-md>
+              <v-layout wrap>
+                <v-flex xs12>
+                  <v-text-field v-model="edit_list.Name" label="Name"></v-text-field>
+                </v-flex>
+                <!--
+                <v-flex xs12>
+                  <v-text-field v-model="edited_task.Cost" label="Cost"></v-text-field>
+                </v-flex>
+              -->
+              </v-layout>
+            </v-container>
+          </v-card-text>
+          <v-layout justify-center xs12>
+          <v-card-actions>
+            <v-spacer/>
+            <v-btn @click="saveList(edit_list)">Save</v-btn>
+            <v-btn @click="close()">Cancel</v-btn>
+          </v-card-actions>
+        </v-layout>
+        </v-card>
+      </v-dialog>
+    </v-layout>
+    <v-layout justify-center>
    <!-- <v-card width="80%"> -->
     <v-data-table
       :headers="headers"
@@ -15,8 +47,14 @@
         <td>{{props.item.CompletedItems}}</td>
         <td>{{props.item.PendingItems}}</td>
         <td>
-          <v-icon @click="">edit</v-icon>
-          <v-icon @click="">delete</v-icon>
+          <!-- <v-btn :to="getPath(props.item)">Show items for {{props.item.id}} </v-btn> -->
+          <v-btn icon :to="getPath(props.item)">
+            <v-icon> toc</v-icon>
+          </v-btn>
+        </td>
+        <td>
+          <v-icon @click="editList(props.item)">edit</v-icon>
+          <v-icon @click="deleteList(props.item)">delete</v-icon>
         </td>
       </template>
       <!--
@@ -27,12 +65,16 @@
     </v-data-table>
     <!--</v-card> -->
   </v-layout>
+
+
+  <router-view/>
   </div>
+
 </template>
 
 <script>
-//const API ="http://localhost:3000/api/ShoppingLists"
-const API = "https://shop-back.herokuapp.com/api/ShoppingLists"
+const API ="http://localhost:3000/api/ShoppingLists"
+//const API = "https://shop-back.herokuapp.com/api/ShoppingLists"
 export default{
   data () {
     return {
@@ -44,26 +86,27 @@ export default{
         {text:"Completion", value:"CompletionPercentage"},
         {text:"Finished", value:"CompletedItems"},
         {text:"Pending", value:"PendingItems"},
+        {text:"Items", value:"list-items"},
         {text:"Actions", value:"actions"}
+
       ],
-      lists:[]
+      lists:[],
+      edit_list:{
+        id: -1,
+        Name: ""
+      },
+      new_list:{
+        Name: ""
+      }
     }
   },
-  /*
   computed: {
     formTitle () {
-      return this.selected_task_id === -1 ? "New Task" : "Edit Task"
-    },
+      return this.edit_list.Name === "" ? "New List" : "Edit List"
+    }
+  },
 
-    completedTasks(){
-      return this.tasks.filter(task => this.isCompleted(task)).length
-    },
-    pendingTasks(){
-      return this.tasks.filter(task => !this.isCompleted(task)).length
-    },
-    completion() {
-      return 100*(this.completedTasks/this.tasks.length)
-    },
+    /*
     totalCost() {
       let cost = 0.0;
 
@@ -71,50 +114,43 @@ export default{
         cost = cost + Number(this.tasks[t].Cost)
       }
 
-      return cost
-    }
-
-
-  },
+      return*/
 
   watch: {
     dialog(val) {
       val || this.close();
     }
   },
-  */
+
   created (){
-    fetch(API)
-    .then(res =>res.json())
-    .then(res => this.lists = res)
-
-    console.log(this.lists);
+    this.getLists();
   },
- /*
-  methods:{
-    getTasks(){
-      fetch(API+'?filter[limit]=1000')
-      .then(res =>res.json())
-      .then(res => this.tasks = res)
 
-      console.log(this.tasks);
+  methods:{
+    getLists(){
+      fetch(API)
+      .then(res =>res.json())
+      .then(res => this.lists = res)
+
+      //console.log(this.tasks);
     },
-    isCompleted (task) {
-      return task.Cost > 0.0 ? true : false;
+
+    getPath(item) {
+      return "/items/"+item.id;
     },
     ///edit tasks
-    editTask(task) {
-      this.selected_task_id = task.id;
-      this.edited_task = Object.assign({}, task)
-      this.dialog = true
+    editList(list) {
+      this.edit_list.Name = list.Name;
+      this.edit_list.id = list.id;
+      this.dialog = true;
 
     },
 
-    deleteTask(task){
-      let ans = confirm('Are you sure you want to delete this item?')
+    deleteList(list){
+      let ans = confirm('Are you sure you want to delete this list?')
       if( ans)
       {
-        fetch(API+"/"+task.Name, {
+        fetch(API+"/"+list.id, {
           headers:{
             'Content-Type':'application/json'
           },
@@ -122,61 +158,63 @@ export default{
         })
         .then(res=> {
           console.log(res.status);
-          this.getTasks()
+          this.getLists();
         })
     }
   },
 
     close() {
       this.dialog = false;
-      this.edited_task = Object.assign({}, this.default_task);
-      this.selected_task_id = -1;
+      this.new_list.Name = "";
+      this.edit_list.Name ="";
+      this.edit_list.id = -1;
     },
 
-    saveTask(task) {
+    saveList(list) {
       //console.log("Cost ", task.Cost, " Name ", task.Name, JSON.stringify(this.default_task));
-      this.default_task.Name = task.Name;
-      this.default_task.Cost = Number(task.Cost);
-      console.log("Cost ", task.Cost, " Name ", task.Name, JSON.stringify(this.default_task));
-      fetch(API+"/"+task.Name, {
-        headers:{
-          'Content-Type':'application/json'
-        },
-        method:'PATCH',
-        body:JSON.stringify(this.default_task)
-      })
-      .then(res=> {
-        console.log("Status", res.status)
-        this.getTasks()
-      }).catch(err => {
-        console.log("Error ", err);
-      })
-      this.close();
+      this.edit_list.Name = list.Name;
+      this.edit_list.id = list.id;
+      //console.log("Cost ", task.Cost, " Name ", task.Name, JSON.stringify(this.default_task));
+      if( list.id > -1 ) {
+        //console.log("Inside");
+        fetch(API+"/"+list.id, {
+          headers:{
+            'Content-Type':'application/json'
+          },
+          method:'PATCH',
+          body:JSON.stringify(this.edit_list)
+        })
+        .then(res=> {
+          console.log("Status", res.status)
+          this.getLists()
+        }).catch(err => {
+          console.log("Error ", err);
+        })
+    }
+    else{
+      this.createList();
+    }
+    this.close();
     },
 
-    createTask () {
-      this.default_task.Name = this.newTaskName;
-      this.default_task.Cost = 0.0;
-      this.TaskAPI('POST')
-      this.newTaskName="";
-      //console.log(this.edited_task)
-
-      //confirm("Do you want to create?")
-    },
-
-    TaskAPI (method_x){
+    createList () {
+      this.new_list.Name = this.edit_list.Name;
       fetch(API, {
         headers:{
           'Content-Type':'application/json'
         },
-        method:method_x,
-        body:JSON.stringify(this.default_task)
+        method:'POST',
+        body:JSON.stringify(this.new_list)
       })
       .then(res=>res.json())
       .then(res=> {
-        this.getTasks()
+        this.getLists()
       })
+      this.new_list.Name = "";
+      //console.log(this.edited_task)
+
+      //confirm("Do you want to create?")
     }
-  }*/
+  }
 }
 </script>

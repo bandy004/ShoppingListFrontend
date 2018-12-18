@@ -2,16 +2,18 @@
   <v-app>
     <v-toolbar dark color="primary">
       <!--<v-toolbar-side-icon></v-toolbar-side-icon>-->
-
-      <v-toolbar-title class="white--text">{{name}}</v-toolbar-title>
-      <v-btn icon to="/tasks">
-        <v-icon>list</v-icon>
-      </v-btn>
-      <v-spacer></v-spacer>
-
       <v-btn icon to="/">
         <v-icon>home</v-icon>
       </v-btn>
+      <v-toolbar-title class="white--text">{{name}}</v-toolbar-title>
+      <!--
+      <v-btn icon to="/lists">
+        <v-icon>list</v-icon>
+      </v-btn>
+    -->
+      <v-spacer></v-spacer>
+
+
 
       <v-btn icon to="/about">
         <v-icon>info</v-icon>

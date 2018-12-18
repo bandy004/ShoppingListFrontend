@@ -9,7 +9,7 @@
       ></v-divider>
       <h1> {{totalCost}}</h1>
       <v-spacer/>
-      <v-toolbar-title> Completion </v-toolbar-title>
+      <v-toolbar-title> Completion {{this.list_id}}</v-toolbar-title>
       <v-divider
         class="mx-2"
         inset
@@ -20,27 +20,27 @@
         class="mx-2"
       ></v-progress-circular>
       <v-spacer/>
-      <v-toolbar-title> Completed Tasks </v-toolbar-title>
+      <v-toolbar-title> Completed Items </v-toolbar-title>
       <v-divider
         class="mx-2"
         inset
         vertical
       ></v-divider>
       <h1>
-         {{ completedTasks }}
+         {{ completedItems }}
       </h1>
       <v-spacer/>
-      <v-toolbar-title> Pending Tasks </v-toolbar-title>
+      <v-toolbar-title> Pending Items </v-toolbar-title>
       <v-divider
         class="mx-2"
         inset
         vertical
       ></v-divider>
-      <h1> {{pendingTasks}}</h1>
+      <h1> {{pendingItems}}</h1>
       <v-spacer/>
 
       <v-dialog v-model="dialog" max-width="30%">
-        <!--<v-btn v-if=false slot="activator" color="primary" dark class="mb-2"> Add Task</v-btn>-->
+        <!--<v-btn v-if=false slot="activator" color="primary" dark class="mb-2"> Add Item</v-btn>-->
         <v-card>
           <v-card-title>
             <span class="headline">{{formTitle}}</span>
@@ -50,10 +50,10 @@
             <v-container grid-list-md>
               <v-layout wrap>
                 <v-flex xs12>
-                  <v-text-field v-model="edited_task.Name" label="Name"></v-text-field>
+                  <v-text-field v-model="edited_item.Name" label="Name"></v-text-field>
                 </v-flex>
                 <v-flex xs12>
-                  <v-text-field v-model="edited_task.Cost" label="Cost"></v-text-field>
+                  <v-text-field v-model="edited_item.Cost" label="Cost"></v-text-field>
                 </v-flex>
               </v-layout>
             </v-container>
@@ -62,7 +62,7 @@
           <v-card-actions>
             <v-spacer/>
             <v-btn @click="close()">Cancel</v-btn>
-            <v-btn @click="saveTask(edited_task)">Save</v-btn>
+            <v-btn @click="saveItem(edited_item)">Save</v-btn>
           </v-card-actions>
         </v-layout>
         </v-card>
@@ -72,13 +72,14 @@
       class="mx-2"
       horizontal
     ></v-divider>
+
     <v-toolbar flat color="white" align="center">
       <v-spacer/>
-      <v-text-field v-model="newTaskName" @keydown.enter="createTask" label="Add Task">
+      <v-text-field v-model="newItemName" @keydown.enter="createItem" label="Add Item">
          <v-fade-transition slot="append">
           <v-icon
-            v-if='newTaskName !=""'
-            @click="createTask"
+            v-if='newItemName !=""'
+            @click="createItem"
           >
             add_circle
           </v-icon>
@@ -86,11 +87,15 @@
       </v-text-field>
       <v-spacer/>
       </v-toolbar>
+      <v-divider
+        class="mx-2"
+        horizontal
+      ></v-divider>
     <v-layout justify-center>
    <!-- <v-card width="80%"> -->
     <v-data-table
       :headers="headers"
-      :items="tasks"
+      :items="items"
       class="elevation-1"
     >
       <template slot="items" slot-scope="props">
@@ -101,8 +106,8 @@
         <td>{{props.item.Name}}</td>
         <td>{{props.item.Cost}}</td>
         <td>
-          <v-icon @click="editTask(props.item)">edit</v-icon>
-          <v-icon @click="deleteTask(props.item)">delete</v-icon>
+          <v-icon @click="editItem(props.item)">edit</v-icon>
+          <v-icon @click="deleteItem(props.item)">delete</v-icon>
         </td>
       </template>
       <!--
@@ -117,8 +122,9 @@
 </template>
 
 <script>
-const API ="http://localhost:3000/api/Items"
-//const API ="https://shop-back.herokuapp.com/api/Items"
+//const API ="http://localhost:3000/api/Items"
+const nAPI = "http://localhost:3000/api/ShoppingLists/";//+{{this.list_id}}+"/items"
+//const API ="https://shop-back.herokuapp.com/api/ShoppingLists/"
 export default{
   data () {
     return {
@@ -135,7 +141,7 @@ export default{
           align: "left",
           sortable: true,
           value: "listId",
-          width: "50%"
+          width: "5%"
         },
         {
           text: "Items",
@@ -155,24 +161,31 @@ export default{
           text: "Actions",
           value: "actions",
           sortable: false,
-          width: "25%"
+          width: "20%"
         },
       ],
-      tasklist_id: -1,
-      newTaskName: "",
-      tasks: [],
-      selected_task_id: -1,
-      edited_task: {
+      list_id: this.$route.params.list_id,
+      API: nAPI+this.$route.params.list_id+"/items",
+      newItemName: "",
+      items: [],
+      selected_item_id: -1,
+      edited_item: {
         Name: "NA",
         Cost: 0.0,
         id:-1,
-        listId:-1,
+        listId:this.list_id,
       },
-      default_task:{
+      default_item:{
         Name: "NA",
         Cost: 0.0,
         id:-1,
-        listId:-1
+        listId:this.list_id
+      },
+      list:{
+        TotalCost: 0,
+        CompletionPercentage: 0,
+        CompletedItems: 0,
+        PendingItems: 0
       }
 
     }
@@ -180,23 +193,23 @@ export default{
 
   computed: {
     formTitle () {
-      return this.selected_task_id === -1 ? "New Task" : "Edit Task"
+      return this.selected_item_id === -1 ? "New Item" : "Edit Item"
     },
 
-    completedTasks(){
-      return this.tasks.filter(task => this.isCompleted(task)).length
+    completedItems(){
+      return this.items.filter(item => this.isCompleted(item)).length
     },
-    pendingTasks(){
-      return this.tasks.filter(task => !this.isCompleted(task)).length
+    pendingItems(){
+      return this.items.filter(item => !this.isCompleted(item)).length
     },
     completion() {
-      return 100*(this.completedTasks/this.tasks.length)
+      return 100*(this.completedItems/this.items.length)
     },
     totalCost() {
       let cost = 0.0;
 
-      for( let t in this.tasks) {
-        cost = cost + Number(this.tasks[t].Cost)
+      for( let t in this.items) {
+        cost = cost + Number(this.items[t].Cost)
       }
 
       return cost
@@ -212,33 +225,40 @@ export default{
   },
 
   created (){
-    this.getTasks();
+    this.getItems();
+    //this.updateList();
+  },
+
+  updated: function() {
+    this.updateList();
   },
 
   methods:{
-    getTasks(){
-      fetch(API+'?filter[limit]=1000')
+    getItems(){
+      console.log(this.API);
+      fetch(this.API)
       .then(res =>res.json())
-      .then(res => this.tasks = res)
+      .then(res => this.items = res)
 
-      console.log(this.tasks);
+      console.log(this.items);
+      //this.updateList();
     },
-    isCompleted (task) {
-      return task.Cost > 0.0 ? true : false;
+    isCompleted (item) {
+      return item.Cost > 0.0 ? true : false;
     },
-    ///edit tasks
-    editTask(task) {
-      this.selected_task_id = task.id;
-      this.edited_task = Object.assign({}, task)
+    ///edit items
+    editItem(item) {
+      this.selected_item_id = item.id;
+      this.edited_item = Object.assign({}, item)
       this.dialog = true
 
     },
 
-    deleteTask(task){
+    deleteItem(item){
       let ans = confirm('Are you sure you want to delete this item?')
       if( ans)
       {
-        fetch(API+"/"+task.id, {
+        fetch(this.API+"/"+item.id, {
           headers:{
             'Content-Type':'application/json'
           },
@@ -246,55 +266,55 @@ export default{
         })
         .then(res=> {
           console.log(res.status);
-          this.getTasks()
+          this.getItems()
         })
-    }
-  },
+      }
+    },
 
     close() {
       this.dialog = false;
-      this.edited_task = Object.assign({}, this.default_task);
-      this.selected_task_id = -1;
+      this.edited_item = Object.assign({}, this.default_item);
+      this.selected_item_id = -1;
     },
 
-    saveTask(task) {
-      //console.log("Cost ", task.Cost, " Name ", task.Name, JSON.stringify(this.default_task));
-      Object.assign(this.default_task, task);
-      //this.default_task.Name = task.Name;
-      //this.default_task.Cost = Number(task.Cost);
-      console.log("Cost ", task.Cost, " Name ", task.Name, JSON.stringify(this.default_task));
-      fetch(API+"/"+task.id, {
+    saveItem(item) {
+      //console.log("Cost ", item.Cost, " Name ", item.Name, JSON.stringify(this.default_item));
+      Object.assign(this.default_item, item);
+      //this.default_item.Name = item.Name;
+      //this.default_item.Cost = Number(item.Cost);
+      //console.log("Cost ", item.Cost, " Name ", item.Name, JSON.stringify(this.default_item));
+      fetch(this.API+"/"+item.id, {
         headers:{
           'Content-Type':'application/json'
         },
-        method:'PATCH',
-        body:JSON.stringify(this.default_task)
+        method:'PUT',
+        body:JSON.stringify(this.default_item)
       })
       .then(res=> {
         console.log("Status", res.status)
-        this.getTasks()
+        this.getItems();
       }).catch(err => {
         console.log("Error ", err);
       })
       this.close();
     },
 
-    createTask () {
-      this.default_task.Name = this.newTaskName;
-      this.default_task.Cost = 0.0;
-      this.default_task.listId = 2;
+    createItem () {
+      this.default_item.Name = this.newItemName;
+      this.default_item.Cost = 0.0;
+      //this.default_item.listId = 2;
 
-      this.TaskAPI('POST')
-      this.newTaskName="";
-      //console.log(this.edited_task)
+      this.ItemAPI('POST')
+      this.newItemName="";
+      //console.log(this.edited_item)
 
       //confirm("Do you want to create?")
     },
 
-    TaskAPI (method_x){
-      let ff =Object.assign({}, this.default_task);
+    ItemAPI (method_x){
+      let ff =Object.assign({}, this.default_item);
       delete ff.id
-      fetch(API, {
+      fetch(this.API, {
         headers:{
           'Content-Type':'application/json'
         },
@@ -303,8 +323,24 @@ export default{
       })
       .then(res=>res.json())
       .then(res=> {
-        this.getTasks()
+        this.getItems()
       })
+    },
+
+    updateList(){
+      this.list.TotalCost = this.totalCost;
+      this.list.CompletedItems = this.completedItems;
+      this.list.CompletionPercentage = this.completion;
+      this.list.PendingItems = this.pendingItems;
+      console.log(JSON.stringify(this.list));
+      fetch(nAPI+this.list_id, {
+        headers:{
+          'Content-Type':'application/json'
+        },
+        method:'PATCH',
+        body:JSON.stringify(this.list)
+      })
+      .then(res=>res.json())
     }
   }
 }

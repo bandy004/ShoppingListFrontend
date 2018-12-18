@@ -4,6 +4,7 @@ import Tasks from './views/Task.vue'
 import Home from './views/Home.vue'
 import Table from './views/table.vue'
 import Lists from './views/ShoppingList.vue'
+import Items from './views/ListItem.vue'
 
 Vue.use(Router)
 
@@ -13,6 +14,11 @@ export default new Router({
       path: '/tasks',
       name: 'tasks',
       component: Tasks
+    },
+    {
+      path: '/items/:list_id',
+      name: 'item_lists',
+      component: Items
     },
     {
       path: '/',
